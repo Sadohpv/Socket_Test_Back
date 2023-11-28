@@ -56,7 +56,7 @@ const getCart = async (req, res) => {
 
 const addCart = async (req, res) => {
   const data = req.body.id;
-
+  // console.log(data);
   try {
     let product = await db.Cart.findAll({
       include: [
@@ -160,6 +160,7 @@ const addToCart = async(req,res)=>{
        
         where: {
           id_product:product.id,
+          status : 0,
         },
         raw: false,
         
@@ -175,12 +176,21 @@ const addToCart = async(req,res)=>{
           message:"Thêm sản phẩm thành công !",
         })
       }else{
+        console.log(product.quantity,cart.quantity);
+        if(product.quantity >= cart.quantity +1){
           cart.quantity = cart.quantity + 1;
           await cart.save();
           return res.status(200).json({
             EC: 0,
             message:"Thêm số lượng sản phẩm !",
           })
+        }else{
+          return res.status(200).json({
+            EC: 1,
+            message:"Hết hàng !",
+          })
+        }
+         
       }
     }
 
@@ -198,10 +208,23 @@ const addToCart = async(req,res)=>{
     console.log(e);
   }
 }
+const clear = async (req,res)=>{
+  let cart = await db.Cart.update({ status: 1 }, {
+    where: {
+      status: 0,
+    },
+  });
+  console.log(cart);
+  return res.status(200).json({
+    EC:0,
+    message:"Thanh toán thành công !",
+  })
+};
 module.exports = {
   getHomePage,
   getCart,
   addCart,
   searchItem,
-  addToCart
+  addToCart,
+  clear
 };

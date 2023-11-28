@@ -9,7 +9,7 @@ const initWebRoutes = (app,io) => {
 
     router.get('/cart', homeController.getCart);
     
-    router.get('/addCart',async (req,res)=>{
+    router.post('/addCart',async (req,res)=>{
         const result = await homeController.addCart(req,res);
         // console.log(result);
         if(result.EC === 0){
@@ -25,7 +25,7 @@ const initWebRoutes = (app,io) => {
 
     router.post('/addToCart',homeController.addToCart);
    
-
+    router.get('/clear',homeController.clear);
     return app.use('/', router);
 };
 
