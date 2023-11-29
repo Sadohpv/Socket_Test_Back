@@ -209,15 +209,49 @@ const addToCart = async(req,res)=>{
   }
 }
 const clear = async (req,res)=>{
+  let product = await db.Cart.findAll({
+    
+    attributes: ["id_product","quantity"],
+
+    where: {
+      status: 0,
+    },
+    raw: true,
+    nest: true,
+  });
+
+
+  if(product){
+    product.map(async (item)=>{
+      let up = await db.Product.findOne({
+      
+        where: {
+          id:item.id_product
+        },
+        raw: false,
+        nest: true,
+      });
+      if(up){
+        if(up.quantity>0){
+
+          up.quantity = up.quantity - item.quantity;
+          await up.save();
+        }
+      }
+    })
+   
+  }
   let cart = await db.Cart.update({ status: 1 }, {
     where: {
       status: 0,
     },
   });
-  console.log(cart);
+ 
+  // console.log(product);
   return res.status(200).json({
     EC:0,
     message:"Thanh toán thành công !",
+    // result
   })
 };
 module.exports = {
