@@ -8,6 +8,7 @@ const initWebRoutes = (app,io) => {
     router.post('/search', homeController.searchItem);
 
     router.get('/cart', homeController.getCart);
+    router.get('/cate/:cate', homeController.getCartCate);
     
     router.post('/addCart',async (req,res)=>{
         const result = await homeController.addCart(req,res);
@@ -24,6 +25,7 @@ const initWebRoutes = (app,io) => {
     });
 
     router.post('/addToCart',homeController.addToCart);
+    router.post('/addProduct', homeController.addProduct);
    
     router.get('/clear',homeController.clear);
     return app.use('/', router);

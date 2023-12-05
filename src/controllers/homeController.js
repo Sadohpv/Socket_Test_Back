@@ -1,6 +1,8 @@
 import db from "../models/index";
 import { io } from "../index";
 import { Op } from "sequelize";
+import { cloudinary } from "./cloudinary";
+
 const getHomePage = async (req, res) => {
   try {
     let product = await db.Product.findAll({});
@@ -96,7 +98,6 @@ const searchItem = async (req, res) => {
   // console.log(data);
   try {
     let product = await db.Product.findAll({
-     
       where: {
         [Op.or]: [
           {
@@ -130,8 +131,8 @@ const searchItem = async (req, res) => {
     console.log(e);
   }
 };
-const addToCart = async(req,res)=>{
-  const data=req.body.data;
+const addToCart = async (req, res) => {
+  const data = req.body.data;
   console.log(data);
   try {
     let product = await db.Product.findOne({
@@ -145,52 +146,49 @@ const addToCart = async(req,res)=>{
       //   },
       // ],
       where: {
-        slug:data
+        slug: data,
       },
       raw: true,
       nest: true,
     });
-    if(product === null){
+    if (product === null) {
       return res.status(200).json({
-        EC:1,
-        message:"Sản phẩm không tồn tại !",
-      })
-    }else{
+        EC: 1,
+        message: "Sản phẩm không tồn tại !",
+      });
+    } else {
       let cart = await db.Cart.findOne({
-       
         where: {
-          id_product:product.id,
-          status : 0,
+          id_product: product.id,
+          status: 0,
         },
         raw: false,
-        
       });
-      if(cart === null ){
+      if (cart === null) {
         await db.Cart.create({
           id_product: product.id,
-          quantity:1,
-          status:0,
+          quantity: 1,
+          status: 0,
         });
         return res.status(200).json({
           EC: 2,
-          message:"Thêm sản phẩm thành công !",
-        })
-      }else{
-        console.log(product.quantity,cart.quantity);
-        if(product.quantity >= cart.quantity +1){
+          message: "Thêm sản phẩm thành công !",
+        });
+      } else {
+        console.log(product.quantity, cart.quantity);
+        if (product.quantity >= cart.quantity + 1) {
           cart.quantity = cart.quantity + 1;
           await cart.save();
           return res.status(200).json({
             EC: 0,
-            message:"Thêm số lượng sản phẩm !",
-          })
-        }else{
+            message: "Thêm số lượng sản phẩm !",
+          });
+        } else {
           return res.status(200).json({
             EC: 1,
-            message:"Hết hàng !",
-          })
+            message: "Hết hàng !",
+          });
         }
-         
       }
     }
 
@@ -207,11 +205,10 @@ const addToCart = async(req,res)=>{
   } catch (e) {
     console.log(e);
   }
-}
-const clear = async (req,res)=>{
+};
+const clear = async (req, res) => {
   let product = await db.Cart.findAll({
-    
-    attributes: ["id_product","quantity"],
+    attributes: ["id_product", "quantity"],
 
     where: {
       status: 0,
@@ -220,39 +217,92 @@ const clear = async (req,res)=>{
     nest: true,
   });
 
-
-  if(product){
-    product.map(async (item)=>{
+  if (product) {
+    product.map(async (item) => {
       let up = await db.Product.findOne({
-      
         where: {
-          id:item.id_product
+          id: item.id_product,
         },
         raw: false,
         nest: true,
       });
-      if(up){
-        if(up.quantity>0){
-
+      if (up) {
+        if (up.quantity > 0) {
           up.quantity = up.quantity - item.quantity;
           await up.save();
         }
       }
-    })
-   
+    });
   }
-  let cart = await db.Cart.update({ status: 1 }, {
-    where: {
-      status: 0,
-    },
-  });
- 
+  let cart = await db.Cart.update(
+    { status: 1 },
+    {
+      where: {
+        status: 0,
+      },
+    }
+  );
+
   // console.log(product);
   return res.status(200).json({
-    EC:0,
-    message:"Thanh toán thành công !",
+    EC: 0,
+    message: "Thanh toán thành công !",
     // result
-  })
+  });
+};
+const addProduct = async (req, res) => {
+  const data = req.body;
+  try {
+    const storageImg = await cloudinary.uploader.upload(data.image, {
+      folder: "DoAn",
+    });
+    // console.log(storageImg);
+    await db.Product.create({
+      slug: data.id,
+      name: data.name,
+      catelogy: data.cate,
+      price: data.price,
+      quantity: data.quantity,
+      img: storageImg.url,
+    });
+    return res.status(200).json({
+      EC: 0,
+      message: "Thêm sản phẩm thành công !",
+      // result
+    });
+  } catch (e) {
+    // console.log(e)
+    return res.status(200).json({
+      EC: 1,
+      message: "Có lỗi gì đó xảy ra !",
+      // result
+    });
+  }
+};
+const getCartCate = async (req, res) => {
+  try {
+    let product = await db.Product.findAll({
+      where: {
+        catelogy: req.params.cate,
+      },
+      raw: true,
+      nest: true,
+    });
+    console.log(product)
+
+    if (product) {
+      return res.status(200).json({
+        EC: 0,
+        product,
+      });
+    } else {
+      return res.status(400).json({
+        EC: 1,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
 };
 module.exports = {
   getHomePage,
@@ -260,5 +310,7 @@ module.exports = {
   addCart,
   searchItem,
   addToCart,
-  clear
+  clear,
+  addProduct,
+  getCartCate,
 };
