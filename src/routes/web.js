@@ -25,6 +25,8 @@ const initWebRoutes = (app,io) => {
     });
 
     router.post('/addToCart',homeController.addToCart);
+    router.post('/addQuan',homeController.addQuan);
+
     router.post('/addProduct', homeController.addProduct);
    
     router.get('/clear',homeController.clear);

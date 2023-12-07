@@ -165,17 +165,24 @@ const addToCart = async (req, res) => {
         raw: false,
       });
       if (cart === null) {
-        await db.Cart.create({
-          id_product: product.id,
-          quantity: 1,
-          status: 0,
-        });
-        return res.status(200).json({
-          EC: 2,
-          message: "Thêm sản phẩm thành công !",
-        });
+        if (product.quantity > 0) {
+          await db.Cart.create({
+            id_product: product.id,
+            quantity: 1,
+            status: 0,
+          });
+          return res.status(200).json({
+            EC: 2,
+            message: "Thêm sản phẩm thành công !",
+          });
+        } else {
+          return res.status(200).json({
+            EC: 1,
+            message: "Hết hàng !",
+          });
+        }
       } else {
-        console.log(product.quantity, cart.quantity);
+        
         if (product.quantity >= cart.quantity + 1) {
           cart.quantity = cart.quantity + 1;
           await cart.save();
@@ -288,7 +295,7 @@ const getCartCate = async (req, res) => {
       raw: true,
       nest: true,
     });
-    console.log(product)
+    console.log(product);
 
     if (product) {
       return res.status(200).json({
@@ -304,6 +311,37 @@ const getCartCate = async (req, res) => {
     console.log(e);
   }
 };
+const addQuan = async (req, res) => {
+  const data = req.body;
+  console.log(data);
+  try {
+    let product = await db.Product.findOne({
+      where: {
+        slug: data.id,
+      },
+      raw: false,
+    
+    });
+    // console.log(product);
+
+    if (product) {
+      product.quantity = product.quantity + (+data.quan);
+      await product.save();
+      return res.status(200).json({
+        EC: 0,
+        message:"Nhập hàng thành công",
+      });
+    } else {
+      return res.status(400).json({
+        EC: 1,
+        message:"Lỗi !",
+
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
 module.exports = {
   getHomePage,
   getCart,
@@ -313,4 +351,5 @@ module.exports = {
   clear,
   addProduct,
   getCartCate,
+  addQuan
 };
