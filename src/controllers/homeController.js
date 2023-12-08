@@ -58,7 +58,7 @@ const getCart = async (req, res) => {
 
 const addCart = async (req, res) => {
   const data = req.body.id;
-  // console.log(data);
+  console.log(data);
   try {
     let product = await db.Cart.findAll({
       include: [
@@ -133,7 +133,7 @@ const searchItem = async (req, res) => {
 };
 const addToCart = async (req, res) => {
   const data = req.body.data;
-  console.log(data);
+  console.log("Here", data);
   try {
     let product = await db.Product.findOne({
       // include: [
@@ -151,6 +151,7 @@ const addToCart = async (req, res) => {
       raw: true,
       nest: true,
     });
+    // console.log()
     if (product === null) {
       return res.status(200).json({
         EC: 1,
@@ -182,7 +183,6 @@ const addToCart = async (req, res) => {
           });
         }
       } else {
-        
         if (product.quantity >= cart.quantity + 1) {
           cart.quantity = cart.quantity + 1;
           await cart.save();
@@ -320,22 +320,119 @@ const addQuan = async (req, res) => {
         slug: data.id,
       },
       raw: false,
-    
     });
     // console.log(product);
 
     if (product) {
-      product.quantity = product.quantity + (+data.quan);
+      product.quantity = product.quantity + +data.quan;
       await product.save();
       return res.status(200).json({
         EC: 0,
-        message:"Nhập hàng thành công",
+        message: "Nhập hàng thành công",
       });
     } else {
       return res.status(400).json({
         EC: 1,
-        message:"Lỗi !",
+        message: "Lỗi !",
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+const getHistory = async (req, res) => {
+  try {
+    let product = await db.Cart.findAll({
+      include: [
+        {
+          // attributes: ["id", "slug"],
+          model: db.Product,
+        },
+      ],
+      where: {
+        status: 1,
+      },
+      raw: true,
+      nest: true,
+    });
+    // console.log(product)
 
+    if (product) {
+      return res.status(200).json({
+        EC: 0,
+        product,
+      });
+    } else {
+      return res.status(400).json({
+        EC: 1,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+const countSold = async (req, res) => {
+  const data = req.params;
+  // console.log(data);
+  try {
+    let product = await db.Cart.findAll({
+      where: {
+        id_product: data.slug,
+        status: 1,
+      },
+      raw: true,
+      nest: true,
+    });
+    // console.log(product)
+    let count = 0;
+    if (product) {
+      product.map((item) => {
+        count = count + item.quantity;
+      });
+      return res.status(200).json({
+        EC: 0,
+        count,
+      });
+    } else {
+      return res.status(400).json({
+        EC: 1,
+        count: 0,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+const addSale = async (req, res) => {
+  const data = req.body;
+  console.log(data);
+  try {
+    let product = await db.Product.findOne({
+      where: {
+        slug: data.id,
+      },
+      raw: false,
+    });
+    // console.log(product);
+
+    if (product) {
+      if (+data.sale > 100 || +data.sale < 0) {
+        return res.status(200).json({
+          EC: 1,
+          message: "Thêm khuyến mãi thất bại",
+        });
+      } else {
+        product.sale = +data.sale;
+        await product.save();
+        return res.status(200).json({
+          EC: 0,
+          message: "Thêm khuyến mãi thành công",
+        });
+      }
+    } else {
+      return res.status(400).json({
+        EC: 1,
+        message: "Lỗi !",
       });
     }
   } catch (e) {
@@ -351,5 +448,8 @@ module.exports = {
   clear,
   addProduct,
   getCartCate,
-  addQuan
+  addQuan,
+  getHistory,
+  countSold,
+  addSale,
 };

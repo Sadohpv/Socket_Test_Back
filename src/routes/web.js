@@ -9,6 +9,8 @@ const initWebRoutes = (app,io) => {
 
     router.get('/cart', homeController.getCart);
     router.get('/cate/:cate', homeController.getCartCate);
+    router.get('/history', homeController.getHistory);
+    router.post('/addToCart',homeController.addToCart);
     
     router.post('/addCart',async (req,res)=>{
         const result = await homeController.addCart(req,res);
@@ -24,8 +26,10 @@ const initWebRoutes = (app,io) => {
           });
     });
 
-    router.post('/addToCart',homeController.addToCart);
     router.post('/addQuan',homeController.addQuan);
+    router.post('/addSale',homeController.addSale);
+
+    router.get('/countSold/:slug',homeController.countSold);
 
     router.post('/addProduct', homeController.addProduct);
    
